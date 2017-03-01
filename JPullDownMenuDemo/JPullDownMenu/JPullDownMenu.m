@@ -23,7 +23,7 @@
 
 #define KTableViewCellHeight 40
 
-#define KDisplayMaxCellOfNumber  5
+#define KDisplayMaxCellOfNumber  8
 
 #define KTitleButtonTag 1000
 
@@ -33,6 +33,9 @@
 #define KOBJCGetObject(object) objc_getAssociatedObject(object, @"title")
 
 @interface JPullDownMenu () <UITableViewDelegate,UITableViewDataSource>
+{
+    NSInteger c;
+}
 
 @property (nonatomic) NSArray *titleArray ;
 
@@ -56,12 +59,14 @@
     self = [super initWithFrame:frame];
     if (self) {
         
-        self.tableViewMaxHeight = KTableViewCellHeight * KDisplayMaxCellOfNumber;
+        self.tableViewMaxHeight = KTableViewCellHeight * 4.5;
         self.selfOriginalHeight =frame.size.height;
         self.titleArray =titleArray;
         
         [self addSubview:self.maskBackGroundView];
         [self addSubview:self.tableView];
+        
+        
         
         [self configBaseInfo];
         
@@ -75,9 +80,9 @@
     //    self.backgroundColor=KmaskBackGroundViewColor;
     
     //用于遮盖self.backgroundColor 。
-    UIView *view = [[UIView alloc]initWithFrame:CGRectMake(0, 0, Kscreen_width, KTitleButtonHeight)];
-    view.backgroundColor=[UIColor whiteColor];
-    [self addSubview:view];
+    //    UIView *view = [[UIView alloc]initWithFrame:CGRectMake(0, 0, Kscreen_width, KTitleButtonHeight)];
+    //    view.backgroundColor=[UIColor blackColor];
+    //    [self addSubview:view];
     
     CGFloat width = Kscreen_width /self.titleArray.count;
     
@@ -85,17 +90,31 @@
         
         UIButton *titleButton=[UIButton buttonWithType:UIButtonTypeCustom];
         
-        titleButton.frame= CGRectMake((width+0.5) * index, 0, width-0.5, KTitleButtonHeight);
-        titleButton.backgroundColor =KDefaultColor;
+        titleButton.frame= CGRectMake(width * index, 0, width, KTitleButtonHeight);
+        titleButton.backgroundColor = [UIColor whiteColor];
         [titleButton setTitle:self.titleArray[index] forState:UIControlStateNormal];
-        [titleButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        //文字颜色
+        [titleButton setTitleColor:[UIColor colorWithRed:51/255.0 green:51/255.0 blue:51/255.0 alpha:1.0] forState:UIControlStateNormal];
+        [titleButton setTitleColor:[UIColor colorWithRed:250/255.0 green:66/255.0 blue:76/255.0 alpha:1.0] forState:UIControlStateSelected];
+        
+        titleButton.titleLabel.font = [UIFont systemFontOfSize:15];
+        
         titleButton.tag =KTitleButtonTag + index ;
         [titleButton addTarget:self action:@selector(titleButtonClick:) forControlEvents:UIControlEventTouchUpInside];
-        titleButton.titleLabel.font = [UIFont systemFontOfSize:15];
-        [titleButton setTitleColor:[[UIColor blackColor]colorWithAlphaComponent:0.3] forState:UIControlStateSelected];
-        [titleButton setImage:[UIImage imageNamed:@"JPullDown.bundle/jiantou_up"] forState:UIControlStateNormal];
-        [titleButton setImage:[UIImage imageNamed:@"JPullDown.bundle/jiantou_down"] forState:UIControlStateSelected];
-        titleButton.imageEdgeInsets = UIEdgeInsetsMake(0, -10, 0, 0);
+        [titleButton setImage:[UIImage imageNamed:@"daosanjiao"] forState:UIControlStateNormal];
+        
+        //        if (index == 0) {
+        //            titleButton.enabled = NO;
+        //        }
+        
+        //        titleButton.imageEdgeInsets = UIEdgeInsetsMake(0, 70, 0, 0);
+        //        titleButton.titleEdgeInsets = UIEdgeInsetsMake(0, -30, 0, 0);
+        
+        titleButton.imageEdgeInsets = UIEdgeInsetsMake(0,titleButton.titleLabel.intrinsicContentSize.width+3.5, 0, -titleButton.titleLabel.intrinsicContentSize.width-3.5);
+        titleButton.titleEdgeInsets = UIEdgeInsetsMake(0, -titleButton.imageView.bounds.size.width-3.5, 0, titleButton.imageView.bounds.size.width+3.5);
+        
+        
+        
         
         [self addSubview:titleButton];
         [self.buttonArray addObject:titleButton];
@@ -113,9 +132,11 @@
     self.tableView=[[UITableView alloc]initWithFrame:CGRectMake(0, self.frame.size.height, Kscreen_width, 0)];
     self.tableView.delegate=self;
     self.tableView.dataSource=self;
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLineEtched;
     self.tableView.backgroundColor=[UIColor groupTableViewBackgroundColor];
     self.tableView.rowHeight= KTableViewCellHeight;
-    
+    //只有当一个主控制器有一个scrollview 并把这个属性设置为yes，其他的scrollview.scrollsToTop = NO 这样才会响应这个事件
+    self.tableView.scrollsToTop = NO;
     
     return self.tableView;
 }
@@ -149,7 +170,7 @@
     {
         cell.isSelected=NO;
     }
-    
+    cell.contentView.backgroundColor = [UIColor whiteColor];
     return cell;
 }
 
@@ -162,6 +183,9 @@
     cell.isSelected = YES;
     
     [self.tempButton setTitle:cell.textLabel.text forState:UIControlStateNormal];
+    
+    self.tempButton.imageEdgeInsets = UIEdgeInsetsMake(0,self.tempButton.titleLabel.intrinsicContentSize.width+3.5, 0, -self.tempButton.titleLabel.intrinsicContentSize.width-3.5);
+    self.tempButton.titleEdgeInsets = UIEdgeInsetsMake(0, -self.tempButton.imageView.bounds.size.width-3.5, 0, self.tempButton.imageView.bounds.size.width+3.5);
     
     KOBJCSetObject(self.tempButton, cell.textLabel.text);
     
@@ -188,29 +212,35 @@
         
         KOBJCSetObject(button, title);
         
+        [button setTitle:title forState:UIControlStateNormal];
+        
     }
     
     [self takeBackTableView];
     
 }
 
-
+//添加点击事件
 -(void)titleButtonClick:(UIButton *)titleButton
 {
     NSUInteger index =  titleButton.tag - KTitleButtonTag;
+    
     
     for (UIButton *button in self.buttonArray) {
         if (button == titleButton) {
             button.selected=!button.selected;
             self.tempButton =button;
+            [self changeButtonObject:button TransformAngle:M_PI];
         }else
         {
             button.selected=NO;
+            [self changeButtonObject:button TransformAngle:0];
         }
     }
     
-    
     if (titleButton.selected) {
+        
+        [self changeButtonObject:titleButton TransformAngle:M_PI];
         
         self.tableDataArray = self.menuDataArray[index];
         
@@ -230,13 +260,14 @@
         
         [self expandWithTableViewHeight:tableViewHeight];
         
+        
+        
     }else
     {
+        
         [self takeBackTableView];
     }
     
-    //    NSIndexSet *set = [NSIndexSet indexSetWithIndex:0];
-    //    [_tableView reloadSections:set withRowAnimation:UITableViewRowAnimationFade];
 }
 
 
@@ -246,9 +277,11 @@
 {
     
     self.maskBackGroundView.hidden=NO;
+    c = 1;
+    self.block(c);
     
     CGRect rect = self.frame;
-    rect.size.height = Kscreen_height - self.frame.origin.y;
+    rect.size.height = Kscreen_height - self.frame.origin.y + self.y;
     self.frame= rect;
     
     [self showSpringAnimationWithDuration:0.3 animations:^{
@@ -267,6 +300,7 @@
 {
     for (UIButton *button in self.buttonArray) {
         button.selected=NO;
+        [self changeButtonObject:button TransformAngle:0];
     }
     
     CGRect rect = self.frame;
@@ -280,27 +314,29 @@
         
     } completion:^{
         self.maskBackGroundView.hidden=YES;
+        c = 0;
+        if (self.block) {
+            self.block(c);
+        }
     }];
     
 }
 
 
+-(void)changeButtonObject:(UIButton *)button TransformAngle:(CGFloat)angle
+{
+    [UIView animateWithDuration:0.5 animations:^{
+        button.imageView.transform =CGAffineTransformMakeRotation(angle);
+    } completion:^(BOOL finished) {
+    }];
+    
+}
 
 -(void)showSpringAnimationWithDuration:(CGFloat)duration
                             animations:(void (^)())animations
                             completion:(void (^)())completion
 {
     
-    //    [UIView animateWithDuration:duration animations:^{
-    //        if (animations) {
-    //            animations();
-    //        }
-    //        
-    //    } completion:^(BOOL finished) {
-    //        if (completion) {
-    //            completion();
-    //        }
-    //    }];
     
     [UIView animateWithDuration:duration delay:0 usingSpringWithDamping:.8 initialSpringVelocity:5 options:UIViewAnimationOptionCurveEaseOut animations:^{
         
@@ -359,7 +395,7 @@
     if (_maskBackGroundView) {
         return _maskBackGroundView;
     }
-    self.maskBackGroundView=[[UIView alloc]initWithFrame:CGRectMake(0,0,self.frame.size.width, Kscreen_height - self.frame.origin.y)];
+    self.maskBackGroundView=[[UIView alloc]initWithFrame:CGRectMake(0,0,self.frame.size.width, Kscreen_height - self.frame.origin.y + self.y)];
     self.maskBackGroundView.backgroundColor=KmaskBackGroundViewColor;
     self.maskBackGroundView.hidden=YES;
     self.maskBackGroundView.userInteractionEnabled=YES;
@@ -378,6 +414,8 @@
 @implementation downMenuCell
 
 
+
+
 -(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     if (self=[super initWithStyle:style reuseIdentifier:reuseIdentifier]) {
@@ -392,7 +430,7 @@
 -(void)configCellView
 {
     self.selectImageView.hidden=YES;
-    self.textLabel.font = [UIFont systemFontOfSize:15];
+    self.textLabel.font = [UIFont systemFontOfSize:14];
     [self addSubview:self.selectImageView];
 }
 
@@ -403,11 +441,11 @@
         return _selectImageView;
     }
     
-    UIImage *image = [UIImage imageNamed:@"JPullDown.bundle/ok"];
+    UIImage *image = [UIImage imageNamed:@"JPullDown.bundle/ico_make"];
     self.selectImageView = [[UIImageView alloc]init];
     self.selectImageView.image=image;
     
-    self.selectImageView.frame = CGRectMake(0,0,image.size.width,image.size.height);
+    self.selectImageView.frame = CGRectMake(0,0,15,10);
     
     self.selectImageView.center = CGPointMake(Kscreen_width-40, self.frame.size.height/2);
     
@@ -418,7 +456,7 @@
 {
     _isSelected = isSelected;
     if (isSelected) {
-        self.textLabel.textColor = KDefaultColor;
+        self.textLabel.textColor = [UIColor colorWithRed:250/255.0 green:66/255.0 blue:76/255.0 alpha:1.0];
         self.backgroundColor =kCellBgColor;
         self.selectImageView.hidden = NO;
     }else

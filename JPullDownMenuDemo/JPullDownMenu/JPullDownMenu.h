@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
+typedef void(^TitleBlock)(NSInteger c);
+
 //@protocol JPullDOwnMenuDelegate <NSObject>
 //
 ////-(void)
@@ -15,6 +17,11 @@
 //@end
 
 @interface JPullDownMenu : UIView
+
+//tableView的偏移量
+@property (nonatomic, assign) CGFloat y;
+
+@property (nonatomic, copy) TitleBlock block;
 
 /*!@brief 分别为:选中cell的text、cell的index、cell对应的Button。 */
 @property (nonatomic) void (^handleSelectDataBlock) (NSString *selectTitle, NSUInteger selectIndex ,NSUInteger selectButtonTag);
@@ -28,6 +35,8 @@
 
 /*!@brief 数据源如果改变的话需调用此方法刷新数据。 */
 -(void)setDefauldSelectedCell;
+-(void)takeBackTableView;
+
 
 @end
 
@@ -38,5 +47,6 @@
 @property (nonatomic) UIImageView  *selectImageView;
 
 @property (nonatomic) BOOL  isSelected;
+
 
 @end
